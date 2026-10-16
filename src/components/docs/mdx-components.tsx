@@ -11,6 +11,7 @@ import { Endpoint } from "./Endpoint";
 import { Steps } from "./Steps";
 import { LinkCard } from "./LinkCard";
 import { MermaidDiagram } from "@/components/shared/MermaidDiagram";
+import { StaticDiagram } from "./StaticDiagram";
 import { ParamTable } from "./ParamTable";
 import { ResponseSchema } from "./ResponseSchema";
 import { BASE_MDX_COMPONENTS } from "@/components/mdx/base-mdx-components";
@@ -41,6 +42,7 @@ export const MDX_COMPONENTS: MDXComponents = {
   Steps,
   LinkCard,
   MermaidDiagram,
+  StaticDiagram,
   ParamTable,
   ResponseSchema,
 

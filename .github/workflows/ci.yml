@@ -46,6 +46,21 @@ jobs:
       # so the spec served from /docs can never silently go stale.
       - run: npm run validate:openapi
 
+  diagrams:
+    name: Generated diagrams up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Graphviz
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+      - run: pip install -r scripts/diagrams/requirements.txt
+      - run: python scripts/diagrams/generate_all.py
+      - name: Fail if public/diagrams/ is stale
+        run: git diff --exit-code -- public/diagrams
+
   e2e:
     name: Route-level a11y & keyboard-nav (Playwright)
     runs-on: ubuntu-latest
