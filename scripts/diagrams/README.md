@@ -11,6 +11,17 @@ pip install -r scripts/diagrams/requirements.txt
 dot -V   # sanity check: should print a graphviz version
 ```
 
+**Version matters.** `dot`'s layout is deterministic for a given Graphviz version, but not stable *across* versions — the same input graph laid out by two different versions can come out at different sizes/coordinates (see [the ADR](../../docs/adr/0001-python-diagram-pipeline.md#determinism) for how this bit us once already). CI pins `graphviz=2.42.2-9ubuntu0.1`. If `dot -V` doesn't report `2.42.2`, regenerate inside the same environment CI uses instead of trusting a bare local run:
+
+```bash
+docker run --rm -v "$(pwd):/work" -w /work ubuntu:24.04 bash -c '
+  apt-get update -qq && apt-get install -y -qq graphviz=2.42.2-9ubuntu0.1 python3 python3-pip python3-venv
+  python3 -m venv /tmp/venv
+  /tmp/venv/bin/pip install -q -r scripts/diagrams/requirements.txt
+  /tmp/venv/bin/python scripts/diagrams/generate_all.py
+'
+```
+
 ## Usage
 
 ```bash

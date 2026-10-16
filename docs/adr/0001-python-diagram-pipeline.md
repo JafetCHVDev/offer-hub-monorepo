@@ -28,11 +28,28 @@ Every node/edge gets a semantic CSS class (`oh-node`, `oh-node--terminal`, `oh-e
 
 ### Determinism
 
-Given the same Graphviz version and the same input graph, `dot`'s layout algorithm produces byte-identical output — verified locally by running the pipeline twice and diffing. The Python package version is pinned in `requirements.txt`; the `dot` binary itself comes from the OS package manager (`apt-get install graphviz` in CI, pinned implicitly by the CI runner image), which is the same tradeoff every tool in this pipeline that wraps a system binary makes.
+Given the same Graphviz version and the same input graph, `dot`'s layout algorithm produces byte-identical output — verified by running the pipeline twice and diffing, both locally and inside the exact container described below. The Python package version is pinned in `requirements.txt`.
+
+**`dot`'s layout is deterministic per version, but not stable across versions.** This was caught, not assumed: an early version of this pipeline committed an SVG generated with a locally-installed Graphviz 16.1.0, and CI's unpinned `apt-get install graphviz` installed 2.42.2 on `ubuntu-latest`, producing a different (still internally valid, just differently laid out) SVG — CI's own staleness check correctly failed the PR. The fix: `.github/workflows/ci.yml` now installs an exact pinned version, `graphviz=2.42.2-9ubuntu0.1`, and every committed SVG under `public/diagrams/` is generated against that same version. Bumping it is a deliberate choice, not a side effect of a runner image update — see [Regenerating against CI's exact environment](#regenerating-against-cis-exact-environment).
+
+### Regenerating against CI's exact environment
+
+Because of the version sensitivity above, don't assume your local Graphviz install matches CI's pinned `2.42.2-9ubuntu0.1`. Regenerate inside the same environment CI uses:
+
+```bash
+docker run --rm -v "$(pwd):/work" -w /work ubuntu:24.04 bash -c '
+  apt-get update -qq && apt-get install -y -qq graphviz=2.42.2-9ubuntu0.1 python3 python3-pip python3-venv
+  python3 -m venv /tmp/venv
+  /tmp/venv/bin/pip install -q -r scripts/diagrams/requirements.txt
+  /tmp/venv/bin/python scripts/diagrams/generate_all.py
+'
+```
+
+If your local `dot -V` already reports `2.42.2`, running `npm run diagrams` directly is equivalent and faster. When in doubt, trust the Docker command (or CI's own diff) over a bare local run.
 
 ### CI enforcement
 
-A dedicated `diagrams` job in `.github/workflows/ci.yml` installs Graphviz + the pinned requirements, runs `npm run diagrams`, then runs `git diff --exit-code -- public/diagrams`. A non-empty diff (a diagram module changed without regenerating, or any other drift) fails the job.
+A dedicated `diagrams` job in `.github/workflows/ci.yml` installs the pinned Graphviz version + the pinned Python requirements, runs `npm run diagrams`, then runs `git diff --exit-code -- public/diagrams`. A non-empty diff (a diagram module changed without regenerating, the pinned Graphviz version changed without regenerating, or any other drift) fails the job.
 
 ## Consequences
 
