@@ -9,7 +9,10 @@ import { ParameterInput } from "./ParameterInput";
 import { ResponseViewer } from "./ResponseViewer";
 import { Textarea } from "@/components/ui/Textarea";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
+// endpoint.path already includes the /api/v1 prefix (it is the real
+// orchestrator path, e.g. "/api/v1/orders/{id}") - BASE_URL must be the bare
+// origin, not the origin + prefix, or every request URL doubles the prefix.
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
 interface EndpointPanelProps {
   endpoint: ApiEndpoint;
